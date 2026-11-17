@@ -19,25 +19,24 @@ import secrets
 import time
 from datetime import datetime
 from pathlib import Path
-
 import pandas as pd
 import requests
 
-# ---------------- Cấu hình ----------------
+
 URL = "https://gateway.chotot.com/v1/public/ad-listing"
 HEADERS = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.nhatot.com/"}
-CATEGORY = 1010                      # Căn hộ/Chung cư
-AD_TYPE = "s"                        # s = cần bán
+CATEGORY = 1010                    
+AD_TYPE = "s"                       
 REGIONS = {12000: "hanoi", 13000: "hcm"}
-LIMIT = 20                           # số tin mỗi request
-SLEEP = (1.0, 2.0)                   # nghỉ ngẫu nhiên 1-2 giây giữa các request
+LIMIT = 20                          
+SLEEP = (1.0, 2.0)                  
 MAX_RETRIES = 4
 
 DATA = Path("data")
-SALT_FILE = DATA / ".salt"           # khoá bí mật để hash, KHÔNG chia sẻ/commit file này
+SALT_FILE = DATA / ".salt"        
 
-# Trường chứa thông tin cá nhân -> xoá trước khi lưu
-PII_FIELDS = ["account_name", "full_name", "avatar", "account_id", "seller_info"]
+
+PII_FIELDS = ["account_name", "full_name", "avatar", "account_id", "seller_info"]  # private fields :)))
 
 # Trường giữ lại trong bảng Parquet
 KEEP = [
@@ -53,10 +52,14 @@ KEEP = [
 ]
 
 
-# ---------------- Hàm tiện ích ----------------
 def get_salt() -> str:
-    """Tạo (lần đầu) hoặc đọc khoá bí mật dùng để hash id người đăng."""
+    """Tạo (lần đầu) hoặc 
+    đọc khoá bí mật dùng để hash id người đăng."""
+
+    # tạo thư mục
     DATA.mkdir(exist_ok=True)
+
+    # salt file
     if not SALT_FILE.exists():
         SALT_FILE.write_text(secrets.token_hex(16))
     return SALT_FILE.read_text().strip()
@@ -171,6 +174,8 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Crawl ngày {crawl_date}")
+
+    # duyệt để crawl theo từng region
     for region in args.regions:
         name = REGIONS.get(region, str(region))
         df = crawl_region(region, name, crawl_date, salt)
